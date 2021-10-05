@@ -1,0 +1,632 @@
+#!/bin/bash
+clear
+memory() {
+        clear
+        while [ -f /etc/passwd ] ;
+        do
+                echo "-----------------------------------------"
+                echo "                  메모리"
+                echo "-----------------------------------------"
+                mem=`free | grep "Mem"`
+                MEMINFO=`echo $mem | awk '{print ($3 / $2) * 100}'`
+                echo -n "메모리의 사용량 확인하기 [Simple | Detail] : "
+                read ans
+                case $ans in
+                        S|s )
+                                clear
+                                echo "Memory Simple Information"
+                                echo "-------------------------------------------"
+                                if [ $MEMINFO \> 80 ]; then
+                                        echo "메모리 사용량 ---------[NO]"
+                                        echo "메모리 사용량이 80%이상으로 과도한 사용량으로 >시스템이 꺼질 수 있습니다."
+                                        echo "필요없는 프로세스는 종료해주시길 바랍니다."
+                                else
+                                        echo "메모리 사용량 ---------[OK]"
+                                        echo "메모리 사용량이 80%이하입니다."
+                                fi
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                        D|d )
+                                memorydetail
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+
+                esac
+        done
+}
+memorydetail() {
+        clear
+        mem=`free | grep "Mem"`
+        MEMINFO=`echo $mem | awk '{print ($3 / $2) * 100}'`
+        TOTALM=$(free -m | grep Mem | awk '{print $2}')
+        USEDM=$(free -m | grep Mem | awk '{print $3}')
+        FREEM=$(free -m | grep Mem | awk '{print $4}')
+        SHARM=$(free -m | grep Mem | awk '{print $5}')
+        BUFCASHEM=$(free -m | grep Mem | awk '{print $6}')
+        echo "Memory Detail Information"
+        echo "-------------------------------------------"
+        echo "메모리 $MEMINFO % 사용중..."
+        echo "총 메모리의 양            : $TOTALM M Byte"
+        echo "사용 중인 메모리의 양     : $USEDM M Byte"
+        echo "사용가능한 메모리의 양    : $FREEM M Byte"
+        echo "Process공유 메모리의 양   :  $SHARM M Byte"
+        echo "버퍼 및 캐시 메모리의 양  : $BUFCASHEM M Byte"
+        return 0
+        break;
+}
+disk() {
+        clear
+        while [ -f /etc/passwd ] ;
+        do
+                echo "-----------------------------------------"
+                echo "                  디스크"
+                echo "-----------------------------------------"
+                DISK_TOTAL=`df -P | grep -v ^Filesystem | awk '{sum += $2} END { print sum; }'`
+                DISK_USED=`df -P | grep -v ^Filesystem | awk '{sum += $3} END { print sum; }'`
+                DISK_PER=`echo "100*$DISK_USED/$DISK_TOTAL" | bc -l`
+                Darr=`df -P | grep -v Filesystem | awk '{print $5}' | sed 's/[^0-9]//g'`
+                FSU=0
+                fuse=()
+
+                echo -n "디스크의 사용량 확인하기 [Simple | Detail] : "
+                read ans
+                case $ans in
+                        S|s )
+                                clear
+                                echo "Disk Simple Information"
+                                echo "-------------------------------------------"
+                                if [ $DISK_PER \> 80 ]; then
+                                        echo "디스크 사용량 ---------[NO]"
+                                        echo "디스크 사용량이 80%이상으로 사용에 문제가 생길 수 있습니다."
+                                else
+                                        echo "디스크 사용량 ---------[OK]"
+                                        echo "디스크 사용량이 80%이하입니다."
+                                fi
+                                for arr in ${Darr[@]}
+                                do
+                                        fuse=`expr $arr`
+                                        if [ $fuse -gt '40' ]; then
+                                                FSU=1
+                                        fi
+                                done
+                                if [ $FSU == 1 ] ; then
+                                        echo "파일 시스템 사용량 ----[NO]"
+                                        echo "40% 이상 사용중인 파일 시스템이 존재합니다."
+                                else
+                                        echo "파일 시스템 사용량 ----[OK]"
+                                        echo "모든 파일 시스템의 사용량이 40% 이하입니다."
+                                fi
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+
+                        D|d )
+                                diskdetail
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+
+                esac
+        done
+}
+
+diskdetail() {
+        clear
+        DISK_TOTAL=`df -P | grep -v ^Filesystem | awk '{sum += $2} END { print sum/1024/1024 " GB" }'`
+        DISK_USED=`df -P | grep -v ^Filesystem | awk '{sum += $3} END { print sum/1024/1024 " GB" }'`
+        DISK_TOTAL2=`df -P | grep -v ^Filesystem | awk '{sum += $2} END { print sum; }'`
+        DISK_USED2=`df -P | grep -v ^Filesystem | awk '{sum += $3} END { print sum; }'`
+        DISK_PER=`echo "100*$DISK_USED2/$DISK_TOTAL2" | bc -l | awk '{printf "%.2f", $1}' `
+        DISK_EXT=`df -P | grep -v ^Filesystem | awk '{sum += $4} END { print sum/1024/1024 " GB" }'`
+        MOUNT=`mount | grep ^/dev | awk '{ print $1,$2, $3 ", type : ",$5}'`
+        RAID=`cat /proc/mdstat`
+        PARTITION=`fdisk -l | grep "/dev/sd*"`
+        FS=`df -P`
+        echo "Disk Detail Information"
+        echo "-------------------------------------------"
+        echo "$DISK_PER% 사용중..."
+        echo "전체 용량    : $DISK_TOTAL"
+        echo "전체 사용량    : $DISK_USED"
+        echo "전체 남은 용량    : $DISK_EXT"
+        echo "---------마운트 상황 및 타입---------"
+        echo "$MOUNT"
+        echo "---------RAID 구성 현황---------"
+        echo "$RAID"
+        echo "---------파티션 구성 현황---------"
+        echo "$PARTITION"
+        echo "---------파일 시스템 현황---------"
+        echo "$FS"
+        break;
+
+}
+cpu() {
+        clear
+        while [ -f /etc/passwd ] ;
+        do
+                echo "-----------------------------------------"
+                echo "                   CPU"
+                echo "-----------------------------------------"
+                CPUINFO=$(top -b -n1 | grep -Po '[0-9.]+ id' | awk '{print 100-$1}')
+                echo -n "CPU의 사용량 확인하기 [Simple | Detail] : "
+                read ans
+                case $ans in
+                        S|s )
+                                clear
+                        	echo "CPU Simple Information"
+                        	echo "-------------------------------------------"
+                                if [ $CPUINFO \> 80 ]; then
+                                        echo "CPU 사용량 ------------[NO]"
+                                        echo "CPU 사용량이 80%이상으로 과도한 사용량으로 시스템이 꺼질 수 있습니다."
+                                        echo "필요없는 프로세스는 종료해주시길 바랍니다."
+                                else
+                                        echo "CPU 사용량 ------------[OK]"
+                                        echo "CPU 사용량이 80%이하입니다."
+                                fi
+
+                               core=$(cat /proc/cpuinfo | egrep 'siblings|cpu cores' | head -1 | awk '{print $3}' )
+                                thread=$(cat /proc/cpuinfo | egrep 'siblings|cpu cores' | head -2 | tail -1 | awk '{print $4}' )
+                                if [ $core == $thread ]; then
+                                        CPUCORECNT=$(cat /proc/cpuinfo | grep 'core id' | wc -l)
+                                        upp=$(nproc)
+                                else
+                                        CPUCORECNT=`expr $(cat /proc/cpuinfo | grep 'core id' | wc) -l/2`
+                                        upp=`expr $(nproc)/2`
+                                fi
+                                        echo "CPU 코어 개수 : $CPUCORECNT 개"
+                                if [ $upp -ne $CPUCORECNT ]; then
+                                        echo "CPU 코어 상태-----[NO] "
+                                        echo "※ 코어에 이상이 있으니 확인 바랍니다"
+                                else
+                                        echo "CPU 코어 상태-----[OK] "
+                                        echo "※ 모든 코어가 정상입니다."
+                                fi
+
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                        D|d )
+                                cpudetail
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+
+                esac
+        done
+}
+cpudetail() {
+        clear
+        echo "CPU Detail Information"
+        echo "-------------------------------------------"
+        CPUINFO=$(cat /proc/cpuinfo | grep 'model name' | head -n 1 )
+        echo "$CPUINFO"
+        CPUUSAGE=$(top -b -n1 | grep -Po '[0-9.]+ id' | awk '{print 100-$1}')
+        echo "CPU 사용량: $CPUUSAGE % 사용중... "
+        CPUCORESP=$(cat /proc/cpuinfo | grep MHz | sed 's\[^0.0-9.9]\\g')
+        echo "CPU 코어 속도 : $CPUCORESP MHz "
+        core=$(cat /proc/cpuinfo | egrep 'siblings|cpu cores' | head -1 | awk '{print $3}' )
+        thread=$(cat /proc/cpuinfo | egrep 'siblings|cpu cores' | head -2 | tail -1 | awk '{print $4}' )
+        if [ $core == $thread ]; then
+                CPUCORECNT=$(cat /proc/cpuinfo | grep 'core id' | wc -l)
+                CPUCOREUSCNT=$(nproc)
+        else
+                CPUCORECNT=`expr $(cat /proc/cpuinfo | grep 'core id' | wc) -l/2`
+                CPUCOREUSCNT=`expr $(nproc)/2`
+        fi
+        echo "실제 CPU 코어 개수 : $CPUCORECNT 개"
+        echo "사용 가능한 CPU 코어 개수 : $CPUCOREUSCNT 개"
+        if [ $CPUCORECNT -ne $CPUCOREUSCNT ]; then
+                echo "※ 비 정상적인 코어가 있습니다!"
+        else
+                echo "※ 모든 코어가 정상적입니다!"
+        fi
+
+        return 0
+        break;
+}
+network() {
+        clear
+        while [ -f /etc/passwd ] ;
+        do                             
+
+                NAME=$(cat /etc/sysconfig/network-scripts/ifcfg-ens* | grep DEVICE | cut -d "=" -f 2)
+                IP=`cat /etc/sysconfig/network-scripts/ifcfg-ens* | grep IPADDR | cut -d "=" -f 2`
+                IP2=`hostname -I | awk '{print $1}'`
+                GW=$(route -n | grep UG | awk '{print $2}')
+                DNS=$(cat /etc/sysconfig/network-scripts/ifcfg-ens* | grep DNS1 | cut -d "=" -f 2)
+	    clear
+                echo "-----------------------------------------"
+                echo "                 네트워크"
+                echo "-----------------------------------------"
+                echo -n "Network 확인하기 [Simple | Detail] : "
+                read ans
+                case $ans in
+                        S|s )
+	                    echo -e "\n"
+	                    echo -e "\033[1;4;5mLoading\033[1;4;0m"
+	                    DNSPING=$(ping -c 5 8.8.8.8)
+	                    echo $DNSPING > /tmp/ping.log
+	                    PINGLOG=$(cat /tmp/ping.log | grep 100%)
+                                clear
+                                echo "Network Simple Information"
+                                echo "-------------------------------------------"
+                                echo "장치명: $NAME"
+                                if [ $ip == $ip2 ]; then
+                                        echo "네트워크 확인----------[OK]"
+                                else
+                                        echo "네트워크 확인----------[NO]"
+                                fi
+                                if [ $GW = 192.168.1.2 ]; then
+                                        echo "게이트웨이 확인--------[OK]"
+                                else
+                                        echo "게이트웨이 확인--------[NO]"
+                                fi
+                                if [ $DNS == 8.8.8.8 ]; then
+                                        echo "도메인 서버 확인-------[OK]"
+                                else
+                                        echo "도메인 서버 확인-------[NO]"
+                                fi
+
+                                if [ -z "$PINGLOG" ]; then
+                                        echo "서버와의 통신----------[OK]"
+                                else
+                                        echo "서버와의 통신----------[NO]"
+                                fi
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                        D|d )
+                                networkdetail
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+                                       Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                esac
+        done
+}
+networkdetail() {
+        echo -e "\n"
+        echo -e "\033[1;4;5mLoading\033[1;4;0m"
+        DNSPING=$(ping -c 5 8.8.8.8)
+        echo $DNSPING > /tmp/ping.log
+        PINGLOG=$(cat /tmp/ping.log | grep 100%)
+        clear
+        NETINFO=$(cat /etc/sysconfig/network-scripts/ifcfg-ens32 | sed -n '16,19p')
+        echo "Network Detail Information"
+        echo "-------------------------------------------"
+        echo "네트워크 설정 파일: cat /etc/sysconfig/network-scripts/ifcfg-ens32"
+        echo "네트워크 설정 확인"
+        echo "$NETINFO"
+        echo "통신속도=$(ethtool ens32 | grep Speed | cut -d ":" -f 2)"
+        echo "전송방식=$(ethtool ens32 | grep Duplex | cut -d ":" -f 2)"
+        echo "사용하는 Port=$(ethtool ens32 | grep Port | cut -d ":" -f 2)"
+        echo "-----------------------------------------------------------------------------"
+        echo "                                라우팅 테이블"
+        echo "-----------------------------------------------------------------------------"
+        echo "$(route -n)"
+        echo "-----------------------------------------------------------------------------"
+        echo "                                DNS 서버 통신"
+        echo "-----------------------------------------------------------------------------"
+        echo "$DNSPING"
+        if [ -z "$PINGLOG" ]; then
+                echo "서버와의 통신----------[OK]"
+        else
+                echo "서버와의 통신----------[NO]"
+        fi
+        return 0
+        break;
+}
+services() {
+        clear
+        echo "-----------------------------------------"
+        echo "                  서비스"
+        echo "-----------------------------------------"
+        while [ -f /etc/passwd ] ;
+        do
+                sv=$(firewall-cmd --list-all | grep services | cut -d ":" -f 2)
+                sv1=($sv)
+                echo -n "사용하고 있는 서비스 확인하기 [Simple | Detail] : "
+                read ans
+                case $ans in
+                        S|s )
+                                echo "Service Simple Information"
+                                echo "-------------------------------------------"
+                                for i in ${sv1[@]}
+                                do
+                                        echo "( $i )-------[OK]"
+                                done
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                        D|d )
+                                servicesdetail
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+                                       Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                esac
+        done
+}
+servicesdetail() {
+        clear
+        tose=`firewall-cmd --get-services |  sed -e "s/[[:space:]]/\n/g"`
+        usese=`firewall-cmd --list-all | grep services |  sed -e "s/[[:space:]]/\n/g"`
+        pr=""
+        a=0
+        echo "Service Detail Information"
+        echo "-------------------------------------------"
+        echo "[Services 설정 확인: firewall-cmd --list-all]"
+        echo "-------------------------------------------"
+        echo "             사용중인 Services"
+        echo "-------------------------------------------"
+        echo "      $(firewall-cmd --list-all | grep services | cut -d ":" -f 2)"
+        echo "-------------------------------------------"
+        echo "            미사용중인 Services"
+        echo "-------------------------------------------"
+
+        for toarr in ${tose[@]}
+        do
+                a=0
+                for usearr in ${usese[@]}
+                do
+                        if [ x$toarr  == x$usearr ] ; then
+                                break
+                        else
+                                a+=`expr 1`
+                        fi
+                        if [ $a == "0111" ] ; then
+                                pr+=`echo "$toarr "`
+                        fi
+                done
+        done
+        echo "$pr" | sed -e "s/[[:space:]]/\n/g" | column -c 100
+        return 0
+        break;
+}
+process() {
+        clear
+        while [ -f /etc/passwd ] ;
+        do
+
+	   echo -e "\n"
+        	   echo -e "\033[1;4;5mLoading\033[1;4;0m"
+                psu=`top -b -o +RES | head -8 | tail -1 | awk '{print "USER: " $2 ", PID: " $1 ", RES: " $6}'`
+                psu_cpu=`top -b -o +%CPU | head -8 | tail -1 | awk '{print "USER: " $2 ", PID: " $1 ", %CPU: " $9}'`
+                psu_mem=`top -b -o +%MEM | head -8 | tail -1 | awk '{print "USER: " $2 ", PID: " $1 ", %MEM: " $10}'`
+                zomp=`ps -ef | grep defunct | grep -v grep | wc -l`
+	   clear
+                    echo "-----------------------------------------"
+                    echo "                프로세스"
+                echo "-----------------------------------------"
+                echo -n "프로세스의 확인하기 [Simple | Detail] : "
+                read ans
+                case $ans in
+                        S|s )
+                                clear
+                                echo "Process Simple Information"
+                                echo "-------------------------------------------"
+                                echo "사용량이 가장 큰 프로세스"
+                                echo "--------------RES--------------"
+                                echo "$psu"
+                                echo "--------------CPU--------------"
+                                echo "$psu_cpu"
+                                echo "--------------MEM-------------"
+                                echo "$psu_mem"
+		        echo "좀비 프로세스 $zomp개-----------[정상]"
+                                echo ""
+                                echo "-------------------------------------------"
+                                echo -n "[Return:r Main:m Quit:q] "
+                                read choice
+                                case $choice in
+                                        R|r )
+                                                clear;;
+                                        M|m )
+                                                clear
+                                                break;;
+
+                                        Q|q )
+                                                clear
+                                                exit 0;;
+                                esac;;
+                        D|d )
+                                processdetail;;
+                esac
+        done
+}
+
+processdetail() {
+        clear        
+        echo -e "\n"
+        echo -e "\033[1;4;5mLoading\033[1;4;0m"
+        psu_3=`top -b -o +RES | head | tail -4`
+        psu_cpu_3=`top -b -o +%CPU | head | tail -4`
+        psu_mem_3=` top -b -o +%MEM | head | tail -4`
+        clear
+        echo "Process Detail Information"
+        pss=`top -b -n 1 | grep running`
+
+        echo "-------------------------------------------"
+        echo "기준별 사용량이 큰 프로세스 top3"
+        echo "-----------------------------------------------------------------------------"
+        echo "                  RES"
+        echo "-----------------------------------------------------------------------------" 
+        echo "$psu_3"
+        echo "-----------------------------------------------------------------------------" 
+        echo "                  CPU"
+        echo "-----------------------------------------------------------------------------" 
+        echo "$psu_cpu_3"
+        echo "-----------------------------------------------------------------------------"
+        echo "                  MEM"
+        echo "-----------------------------------------------------------------------------"
+        echo "$psu_mem_3"
+        echo " "
+        echo "-------------------------------프로세스 현황---------------------------------"
+        echo "$pss"
+
+        echo "-------------------------------------------"
+        echo -n "[Return:r Main:m Quit:q] "
+        read choice
+        case $choice in
+                R|r )
+                        clear;;
+                M|m )
+                        clear
+                        break;;
+                Q|q )
+                        clear
+                        exit 0;;
+        esac
+        return 0
+        break;
+}
+while [ -f /etc/passwd ] ;
+do
+        ver=$(cat /etc/system-release)
+        echo "시스템 Version: $ver"
+        echo "--------------------------------------------"
+        echo "1. Mem"
+        echo "2. Disk"
+        echo "3. CPU"
+        echo "4. Network"
+        echo "5. Services"
+        echo "6. Process"
+        echo "q. Quit"
+        echo "--------------------------------------------"
+        echo -n "                               Choice the num : "
+        read num
+
+        case $num in
+                "1" )
+                        memory;;
+                "2" )
+                        disk;;
+                "3" )
+                        cpu;;
+                "4" )
+                        network;;
+                "5" )
+                        services;;
+                "6" )
+                        process;;
+                "q" )
+                        clear
+                        exit 0;;
+        esac
+done
+
